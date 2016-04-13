@@ -1,12 +1,13 @@
 // Get the packages we need
 var express = require('express');
 var mongoose = require('mongoose');
-var Llama = require('./models/llama');
+var User = require('./models/user');
+var Recipe = require('./models/recipe');
 var bodyParser = require('body-parser');
 var router = express.Router();
 
 //replace this with your Mongolab URL
-mongoose.connect('mongodb://localhost/mp4');
+mongoose.connect('mongodb://hanna:test@ds023490.mlab.com:23490/recipez');
 
 // Create our Express application
 var app = express();
@@ -23,9 +24,7 @@ var allowCrossDomain = function(req, res, next) {
 app.use(allowCrossDomain);
 
 // Use the body-parser package in our application
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+app.use(bodyParser.json());
 
 // All our routes will start with /api
 app.use('/api', router);
@@ -34,17 +33,280 @@ app.use('/api', router);
 var homeRoute = router.route('/');
 
 homeRoute.get(function(req, res) {
-  res.json({ message: 'Hello World!' });
+  res.json({ message: 'Go to /users and /recipes to get data', data: null});
 });
 
-//Llama route
-var llamaRoute = router.route('/llamas');
+//User routes
+var usersRoute = router.route('/users');
 
-llamaRoute.get(function(req, res) {
-  res.json([{ "name": "alice", "height": 12 }, { "name": "jane", "height": 13 }]);
+usersRoute.get(function(req, res) {
+	var where = eval("(" + req.query.where + ")");
+	var sort = eval("(" + req.query.sort + ")");
+	var select = eval("(" + req.query.select + ")");
+	var skip = eval(req.query.skip);
+	var limit = eval(req.query.limit);
+	var count = req.query.count;
+
+	var query = User.find(where)
+	.sort(sort)
+	.select(select)
+	.skip(skip)
+	.limit(limit);
+
+	if(count==true || count == "true")
+		query.count();
+
+	query.exec(function(err, users){
+	  	if(err)
+	  		res.status(404).json({message: "Error getting users", data: err});
+	  	else
+	  		res.status(200).json({message: "Got users", data: users});
+	})
 });
 
-//Add more routes here
+usersRoute.post(function(req, res) {
+	var name = req.body.name;
+	var email = req.body.email;
+	var password = req.body.password;
+	var tags = req.body.tags;
+
+	if(!name){
+		res.status(500).json({message: "Name is required", data: null});
+	}
+	else if(!email){
+		res.status(500).json({message: "Email is required", data: null});
+	}
+	else if(!password){
+		res.status(500).json({message: "Password is required", data: null});
+	}
+	else {
+		User.findOne({"email": email}, function(err, result){
+			if(err)
+				res.status(404).json({message: "Error adding user", data: err});
+			if(result)
+				res.status(500).json({message: "Email already exists", data: result});
+			else{
+				var user = new User();
+				user.name = name;
+				user.email = email;
+				user.password = password;
+				if(tags)
+					user.tags = tags;
+				user.save(function(err1) {
+					if(err1)
+						res.status(404).json({message: "Error adding user", data: err1});
+					else
+						res.status(201).json({message:"User sucessfully added!", data: user});
+				});
+			}
+		})
+	}
+});
+
+usersRoute.options(function(req, res){
+	res.writeHead(200);
+	res.end();
+});
+
+var userRoute = router.route('/users/:user_id');
+
+userRoute.get(function(req, res){
+	User.findById(req.params.user_id, function(err, user){
+		if(err || !user)
+			res.status(404).json({message: "Error getting user", data: err});
+		else 
+			res.status(200).json({message: "Got user", data: user});
+	});
+});
+
+userRoute.put(function(req, res) {
+	var name = req.body.name;
+	var email = req.body.email;
+	var password = req.body.password;
+	var recipes = req.body.recipes;
+	var tags = req.body.tags;
+
+	if(!name){
+		res.status(500).json({message: "Name is required", data: null});
+	}
+	else if(!email){
+		res.status(500).json({message: "Email is required", data: null});
+	}
+	else if(!password){
+		res.status(500).json({message: "Password is required", data: null});
+	}
+	else {
+		User.findById(req.params.user_id, function(err, user){
+			if(err || !user)
+				res.status(404).json({message: "Error updating user", data: err});
+			else {
+				user.name = name;
+				user.email = email;
+				user.password = password;
+				if(recipes)
+					user.recipes = recipes;
+				if(tags)
+					user.tags = tags;
+				user.save(function(err1){
+					if(err1)
+						res.status(404).json({message: "Error updating user", data: err1});
+					else
+						res.status(201).json({message: "Updated user!", data: user});
+				});
+			}
+		})
+	}
+});
+
+userRoute.delete(function(req, res) {
+	User.findByIdAndRemove(req.params.user_id, function(err, user) {
+		if(err || !user)
+			res.status(404).json({message: "Error deleting user", data: err});
+		else
+			res.status(200).json({message: "User deleted from the database!", data: user});
+	});
+});
+
+//Recipe routes
+var recipesRoute = router.route('/recipes');
+
+recipesRoute.get(function(req, res) {
+	var where = eval("(" + req.query.where + ")");
+	var sort = eval("(" + req.query.sort + ")");
+	var select = eval("(" + req.query.select + ")");
+	var skip = eval(req.query.skip);
+	var limit = eval(req.query.limit);
+	var count = req.query.count;
+
+	var query = Recipe.find(where)
+	.sort(sort)
+	.select(select)
+	.skip(skip)
+	.limit(limit);
+
+	if(count==true || count == "true")
+		query.count();
+
+	query.exec(function(err, recipes){
+	  	if(err)
+	  		res.status(404).json({message: "Error getting recipes", data: err});
+	  	else
+	  		res.status(200).json({message: "Got recipes", data: recipes});
+	})
+});
+
+recipesRoute.post(function(req, res) {
+	var name = req.body.name;
+	var image = req.body.image;
+	var ingredients = req.body.ingredients;
+	var directions = req.body.directions;
+	var time = req.body.time;
+	var cost = req.body.cost;
+	var tags = req.body.tags;
+
+	if(!name){
+		res.status(500).json({message: "Name is required", data: null});
+	}
+	else if(!time){
+		res.status(500).json({message: "Time is required", data: null});
+	}
+	else if(!cost){
+		res.status(500).json({message: "Cost is required", data: null});
+	}
+	else {
+		var recipe = new Recipe();
+		recipe.name = name;
+		recipe.time = time;
+		recipe.cost = cost;
+		if(image)
+			recipe.image = image;
+		if(ingredients)
+			recipe.ingredients = ingredients;
+		if(directions)
+			recipe.directions = directions;
+		if(tags)
+			recipe.tags = tags;
+		recipe.save(function(err1) {
+			if(err1)
+				res.status(404).json({message: "Error adding recipe", data: err1});
+			else
+				res.status(201).json({message:"Recipe sucessfully added!", data: recipe});
+		});
+	}
+});
+
+recipesRoute.options(function(req, res){
+	res.writeHead(200);
+	res.end();
+});
+
+var recipeRoute = router.route('/recipes/:recipe_id');
+
+recipeRoute.get(function(req, res){
+	Recipe.findById(req.params.recipe_id, function(err, recipe){
+		if(err || !recipe)
+			res.status(404).json({message: "Error getting recipe", data: err});
+		else 
+			res.status(200).json({message: "Got recipe", data: recipe});
+	});
+});
+
+recipeRoute.put(function(req, res) {
+	var name = req.body.name;
+	var image = req.body.image;
+	var ingredients = req.body.ingredients;
+	var directions = req.body.directions;
+	var time = req.body.time;
+	var cost = req.body.cost;
+	var tags = req.body.tags;
+	var reviews = req.body.reviews;
+
+	if(!name){
+		res.status(500).json({message: "Name is required", data: null});
+	}
+	else if(!time){
+		res.status(500).json({message: "Time is required", data: null});
+	}
+	else if(!cost){
+		res.status(500).json({message: "Cost is required", data: null});
+	}
+	else {
+		Recipe.findById(req.params.recipe_id, function(err, recipe){
+			if(err || !recipe)
+				res.status(404).json({message: "Error updating recipe", data: err});
+			else {
+				recipe.name = name;
+				recipe.time = time;
+				recipe.cost = cost;
+				if(image)
+					recipe.image = image;
+				if(ingredients)
+					recipe.ingredients = ingredients;
+				if(directions)
+					recipe.directions = directions;
+				if(tags)
+					recipe.tags = tags;
+				if(reviews)
+					recipe.reviews = reviews;
+				recipe.save(function(err1){
+					if(err1)
+						res.status(404).json({message: "Error updating recipe", data: err1});
+					else
+						res.status(201).json({message: "Updated recipe!", data: recipe});
+				});
+			}
+		})
+	}
+});
+
+recipeRoute.delete(function(req, res) {
+	Recipe.findByIdAndRemove(req.params.recipe_id, function(err, recipe) {
+		if(err || !recipe)
+			res.status(404).json({message: "Error deleting recipe", data: err});
+		else
+			res.status(200).json({message: "Recipe deleted from the database!", data: recipe});
+	});
+});
 
 // Start the server
 app.listen(port);
