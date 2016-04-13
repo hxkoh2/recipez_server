@@ -1,22 +1,21 @@
-# RecipEZ
+# RecipEZ Server
 The base url is:
 `localhost:4000/api/` 
 
-Nodemon does auto-reloading the same way grunt does on the frontend.
-| Endpoints | Actions | Intended Outcome |
-| --- | --- | --- |
-| users | GET | Gets list of all users |
-| | POST | Create a new user. Respond with details of new user |
-| | OPTIONS | |
-| users/:id | GET | Get details of specified user |
-| | PUT | Replace entire user with supplied user |
-| | DELETE | Delete specified user |
-| recipes | GET | Gets list of all recipes |
-| | POST | Creates a new recipe. Responds with details of new recipe |
-| | OPTIONS | |
-| recipes/:id | GET | Get details of specified recipe |
-| | PUT | Replace entire recipe with supplied recipe |
-| | DELETE | Delete specified recipe |
+Endpoints | Actions | Intended Outcome 
+--- | --- | --- 
+users | GET | Gets list of all users 
+ | POST | Create a new user. Respond with details of new user
+ | OPTIONS | 
+users/:id | GET | Get details of specified user 
+ | PUT | Replace entire user with supplied user 
+ | DELETE | Delete specified user 
+recipes | GET | Gets list of all recipes 
+ | POST | Creates a new recipe. Responds with details of new recipe 
+ | OPTIONS | 
+recipes/:id | GET | Get details of specified recipe 
+ | PUT | Replace entire recipe with supplied recipe 
+ | DELETE | Delete specified recipe 
 
 ## Users
 * Name, email, and password are required
