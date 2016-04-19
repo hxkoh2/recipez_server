@@ -39,6 +39,7 @@ recipes/:id | GET | Get details of specified recipe
 {
     "name": "Mac and Cheese",
     "image": "http://cdn1.tmbi.com/TOH/Images/Photos/37/300x300/exps47665_SD143203C10_24_5b.jpg",
+    "description": "Best mac and cheese in the world!",
     "ingredients": [{"name": "Water", "quantity": 3, "unit": "cups"},
                     {"name": "Store-bought box of mac and cheese", "quantity": 1, "unit": "box"}],
     "directions": ["Boil 3 cups of water", "Boil pasta from box", "Mix cheese packet"],

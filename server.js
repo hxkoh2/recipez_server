@@ -203,6 +203,7 @@ recipesRoute.post(function(req, res) {
 	var time = req.body.time;
 	var cost = req.body.cost;
 	var tags = req.body.tags;
+	var description = req.body.description;
 
 	if(!name){
 		res.status(500).json({message: "Name is required", data: null});
@@ -226,6 +227,8 @@ recipesRoute.post(function(req, res) {
 			recipe.directions = directions;
 		if(tags)
 			recipe.tags = tags;
+		if(description)
+			recipe.description = description;
 		recipe.save(function(err1) {
 			if(err1)
 				res.status(404).json({message: "Error adding recipe", data: err1});
@@ -260,6 +263,7 @@ recipeRoute.put(function(req, res) {
 	var cost = req.body.cost;
 	var tags = req.body.tags;
 	var reviews = req.body.reviews;
+	var description = req.body.description;
 
 	if(!name){
 		res.status(500).json({message: "Name is required", data: null});
@@ -288,6 +292,8 @@ recipeRoute.put(function(req, res) {
 					recipe.tags = tags;
 				if(reviews)
 					recipe.reviews = reviews;
+				if(description)
+					recipe.description = description;
 				recipe.save(function(err1){
 					if(err1)
 						res.status(404).json({message: "Error updating recipe", data: err1});
