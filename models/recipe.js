@@ -11,7 +11,7 @@ var RecipeSchema = new mongoose.Schema({
 	time: Number, //in minutes
 	cost: Number, //in dollars
 	tags: [String],
-	reviews: [{username: String, content: String, userid: String}] //Store user's name and not id? 
+	reviews: [{username: String, content: String, rating: {type: Number, default: 3}, userid: String}] //Store user's name and not id? 
 });
 
 // Export the Mongoose model
