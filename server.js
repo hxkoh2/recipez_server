@@ -24,6 +24,7 @@ var port = process.env.PORT || 4000;
 var allowCrossDomain = function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept");
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
   next();
 };
 app.use(allowCrossDomain);
@@ -39,7 +40,7 @@ app.use('/api', router);
 
 //passport
 app.use(passport.initialize());
-var auth = expressjwt({secret: 'SECRET', userProperty: 'payload'});
+var auth = expressjwt({secret: 'MY SECRET', userProperty: 'payload'});
 
 //Default route here
 var homeRoute = router.route('/');
@@ -131,26 +132,29 @@ userRoute.get(function(req, res){
 	});
 });
 
-userRoute.put(auth, function(req, res) {
+userRoute.put(function(req, res) {
 	var name = req.body.name;
 	var email = req.body.email;
 	var password = req.body.password;
 	var recipes = req.body.recipes;
 	var tags = req.body.tags;
+	console.log("here");
 
 	if(!name){
-		res.status(500).json({message: "Name is required", data: null});
+		res.status(400).json({message: "Name is required", data: null});
 	}
 	else if(!email){
-		res.status(500).json({message: "Email is required", data: null});
+		res.status(400).json({message: "Email is required", data: null});
 	}
 	else if(!password){
-		res.status(500).json({message: "Password is required", data: null});
+		res.status(400).json({message: "Password is required", data: null});
 	}
 	else {
 		User.findById(req.params.user_id, function(err, user){
-			if(err || !user)
-				res.status(404).json({message: "Error updating user", data: err});
+			if(err)
+				res.status(500).json({message: "Error updating user", data: err});
+			else if (!user)
+				res.status(404).json({message: "User not found", data: null});
 			else {
 				user.name = name;
 				user.email = email;
@@ -161,9 +165,9 @@ userRoute.put(auth, function(req, res) {
 					user.tags = tags;
 				user.save(function(err1){
 					if(err1)
-						res.status(404).json({message: "Error updating user", data: err1});
+						res.status(500).json({message: "Error updating user", data: err1});
 					else
-						res.status(201).json({message: "Updated user!", data: user});
+						res.status(200).json({message: "Updated user!", data: user, token: user.generateJWT()});
 				});
 			}
 		})
