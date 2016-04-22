@@ -14,10 +14,9 @@ UserSchema.methods.generateJWT = function () {
 	var today = new Date();
 	var exp = new Date(today);
 	//1 day
-	exp.setDate(today.getDate() + 1);
+	exp.setDate(today.getDate() + 1);	
 	return jwt.sign({
-		_id: this._id,
-		username: this.username,
+		user: this,
 		exp: parseInt(exp.getTime() / 1000)
 	}, 'MY SECRET');
 };
