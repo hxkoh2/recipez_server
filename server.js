@@ -6,6 +6,11 @@ var Recipe = require('./models/recipe');
 var bodyParser = require('body-parser');
 var router = express.Router();
 
+var expressjwt = require('express-jwt');
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+//require('./config/passport');
+
 //replace this with your Mongolab URL
 mongoose.connect('mongodb://hanna:test@ds023490.mlab.com:23490/recipez');
 
@@ -24,10 +29,17 @@ var allowCrossDomain = function(req, res, next) {
 app.use(allowCrossDomain);
 
 // Use the body-parser package in our application
+// app.use(bodyParser.urlencoded({
+//   extended: true
+// }));
 app.use(bodyParser.json());
 
 // All our routes will start with /api
 app.use('/api', router);
+
+//passport
+app.use(passport.initialize());
+var auth = expressjwt({secret: 'SECRET', userProperty: 'payload'});
 
 //Default route here
 var homeRoute = router.route('/');
@@ -71,20 +83,20 @@ usersRoute.post(function(req, res) {
 	var tags = req.body.tags;
 
 	if(!name){
-		res.status(500).json({message: "Name is required", data: null});
+		res.status(400).json({message: "Name is required", data: null});
 	}
 	else if(!email){
-		res.status(500).json({message: "Email is required", data: null});
+		res.status(400).json({message: "Email is required", data: null});
 	}
 	else if(!password){
-		res.status(500).json({message: "Password is required", data: null});
+		res.status(400).json({message: "Password is required", data: null});
 	}
 	else {
 		User.findOne({"email": email}, function(err, result){
 			if(err)
-				res.status(404).json({message: "Error adding user", data: err});
+				res.status(500).json({message: "Error adding user", data: err});
 			if(result)
-				res.status(500).json({message: "Email already exists", data: result});
+				res.status(409).json({message: "Email already exists", data: result});
 			else{
 				var user = new User();
 				user.name = name;
@@ -94,9 +106,9 @@ usersRoute.post(function(req, res) {
 					user.tags = tags;
 				user.save(function(err1) {
 					if(err1)
-						res.status(404).json({message: "Error adding user", data: err1});
+						res.status(500).json({message: "Error adding user", data: err1});
 					else
-						res.status(201).json({message:"User sucessfully added!", data: user});
+						res.status(201).json({message:"User sucessfully added!", data: user, token: user.generateJWT()});
 				});
 			}
 		})
@@ -119,7 +131,7 @@ userRoute.get(function(req, res){
 	});
 });
 
-userRoute.put(function(req, res) {
+userRoute.put(auth, function(req, res) {
 	var name = req.body.name;
 	var email = req.body.email;
 	var password = req.body.password;
@@ -313,6 +325,57 @@ recipeRoute.delete(function(req, res) {
 			res.status(200).json({message: "Recipe deleted from the database!", data: recipe});
 	});
 });
+
+
+
+// UserSchema.methods.generateJWT = function () {
+// 	var today = new Date();
+// 	var exp = new Date(today);
+// 	//1 day
+// 	exp.setDate(today.getDate() + 1);
+// 	return jwt.sign({
+// 		_id: this._id,
+// 		username: this.username,
+// 		exp: parseInt(exp.getTime() / 1000)
+// 	}, 'MY SECRET');
+// }
+passport.use(new LocalStrategy({usernameField: 'email'},function (username, password, done) {
+	
+	User.findOne({email: username}, function (err, user) {
+		if(err)
+			return done(err);
+		if(!user)
+			return done(null, false, {message: 'Invalid Email'});
+		if(!user.validPassword(password))
+			return done(null, false, {message: 'Incorrect Password'});
+		return done(null, user);
+	});
+}));
+
+
+var loginRoute = router.route('/login');
+
+loginRoute.post(function (req, res, next) {
+	if(!req.body.email || !req.body.password)
+		return res.status(400).json({message: 'Please fill out all fields'});
+
+	passport.authenticate('local', function (err, user, info) {
+		if(err){
+			res.status(500).json({message: 'Internal server error'});
+		}
+		else if(!user){
+			res.status(404).json({message: 'User not found', info: info});
+		}
+		else{
+			res.status(200).json({message: 'User validation successfull!', token: user.generateJWT()});
+		}
+
+	})(req, res, next);
+
+});
+
+
+
 
 // Start the server
 app.listen(port);
