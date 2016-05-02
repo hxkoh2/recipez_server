@@ -370,7 +370,7 @@ loginRoute.post(function (req, res, next) {
 			res.status(500).json({message: 'Internal server error'});
 		}
 		else if(!user){
-			res.status(404).json({message: 'User not found', info: info});
+			res.status(404).json({message: info.message});
 		}
 		else{
 			res.status(200).json({message: 'User validation successfull!', token: user.generateJWT()});
@@ -385,4 +385,3 @@ loginRoute.post(function (req, res, next) {
 
 // Start the server
 app.listen(port);
-console.log('Server running on port ' + port);
