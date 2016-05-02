@@ -138,7 +138,6 @@ userRoute.put(function(req, res) {
 	var password = req.body.password;
 	var recipes = req.body.recipes;
 	var tags = req.body.tags;
-	console.log("here");
 
 	if(!name){
 		res.status(400).json({message: "Name is required", data: null});
