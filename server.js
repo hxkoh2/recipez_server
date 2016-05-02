@@ -138,7 +138,7 @@ userRoute.put(function(req, res) {
 	var password = req.body.password;
 	var recipes = req.body.recipes;
 	var tags = req.body.tags;
-	console.log("here");
+	var saves = req.body.saves;
 
 	if(!name){
 		res.status(400).json({message: "Name is required", data: null});
@@ -163,6 +163,8 @@ userRoute.put(function(req, res) {
 					user.recipes = recipes;
 				if(tags)
 					user.tags = tags;
+				if(saves)
+					user.saves = saves;
 				user.save(function(err1){
 					if(err1)
 						res.status(500).json({message: "Error updating user", data: err1});
