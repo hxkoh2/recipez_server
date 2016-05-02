@@ -8,6 +8,7 @@ var UserSchema = new mongoose.Schema({
 	password: String,
 	recipes: [String], //store recipe id's
 	tags: [String],
+	saves: [String] //store recipe id's
 });
 
 UserSchema.methods.generateJWT = function () {
